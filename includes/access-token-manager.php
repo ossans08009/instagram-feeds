@@ -106,10 +106,15 @@ function instagram_account_save_postdata($post_id) {
     $post_id = wp_insert_post($new_post);
 
     // カスタムフィールドに他のプロフィール情報を保存
-    if ($post_id) {
-        update_post_meta($post_id, '_instagram_api_id', sanitize_text_field($_POST['instagram_api_id']));
-        update_post_meta($post_id, '_instagram_access_token', sanitize_text_field($_POST['instagram_access_token']));
+    if (!$post_id) {
+        return 'うまく投稿できてなくなぁい？';
     }
+
+    update_post_meta($post_id, '_instagram_api_id', sanitize_text_field($_POST['instagram_api_id']));
+    update_post_meta($post_id, '_instagram_access_token', sanitize_text_field($_POST['instagram_access_token']));
+
+    // feed取得のcronを即時実行
+    do_action('fetch_instagram_feed');
 }
 add_action('save_post', 'instagram_account_save_postdata');
 
@@ -143,6 +148,9 @@ function refresh_instagram_access_token() {
         // 新しいアクセストークンを保存
         update_post_meta($account->ID, '_instagram_access_token', sanitize_text_field($data['access_token']));
     }
+
+    // feed取得のcronを即時実行
+    do_action('fetch_instagram_feed');
 }
 add_action('refresh_instagram_access_token_event', 'refresh_instagram_access_token');
 

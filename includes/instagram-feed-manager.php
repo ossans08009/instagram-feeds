@@ -32,7 +32,7 @@ function create_instagram_feed_post_type() {
 add_action('init', 'create_instagram_feed_post_type');
 
 // Instagram APIからフィードを取得する関数
-function fetch_instagram_feed() {
+function fetch_instagram_feed_event() {
     // instagramアカウント全部取る
     $posts = get_all_instagram_account_posts();
 
