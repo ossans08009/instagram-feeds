@@ -14,11 +14,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 // プラグインのディレクトリパスを定義
 define( 'INSTAGRAM_FEEDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
-// 必要なファイルを読み込む
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/cron-manager/cron-manager.php';
+// アクセストークンの管理をまとめたファイル
 require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/access-token-manager/access-token-manager.php';
+// インスタグラムのfeed管理をまとめたファイル
 require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-manager/instagram-feed-manager.php';
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-carousel/instagram-feed-carousel.php';
+// 表示用ショートコード周りの処理をまとめたファイル
+require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-carousel/short-code-manager.php';
 
 // 管理画面メニューとサブメニューの追加
 function instagram_feeds_add_admin_menu() {
@@ -49,31 +50,9 @@ function instagram_feeds_add_admin_menu() {
         'Feed管理',                              // ページタイトル
         'Feed管理',                              // メニュータイトル
         'manage_options',                     // 権限
-        'feed-manager',           // メニューのスラッグ
+        'instagram-feed-manager',           // メニューのスラッグ
         'edit.php?post_type=instagram_feed'   // 投稿タイプの編集ページを開く
     );
-
-    /*
-    // サブメニュー「ショートコード管理」
-    add_submenu_page(
-        'instagram-feeds',                    // 親メニューのスラッグ
-        'ショートコード管理',                           // ページタイトル
-        'Short Codes',                           // メニュータイトル
-        'manage_options',                     // 権限
-        'short-code-manager',           // メニューのスラッグ
-        'edit.php?post_type=instagram_feed'       // 表示する関数
-    );
-
-    // サブメニュー「Cron管理」
-    add_submenu_page(
-        'instagram-feeds',                    // 親メニューのスラッグ
-        'ショートコード管理',                           // ページタイトル
-        'Short Codes',                           // メニュータイトル
-        'manage_options',                     // 権限
-        'cron-manager',                           // メニューのスラッグ
-        'edit.php?post_type=instagram_feed'       // 表示する関数
-    );
-     */
 }
 add_action( 'admin_menu', 'instagram_feeds_add_admin_menu' );
 
@@ -93,9 +72,53 @@ function instagram_feeds_overview_page() {
     <?php
 }
 
-// スタイルシートとスクリプトの読み込み
-function instagram_feeds_enqueue_assets() {
-    wp_enqueue_style( 'instagram-feeds-style', plugins_url( 'assets/style.css', __FILE__ ) );
-    wp_enqueue_script( 'instagram-feeds-script', plugins_url( 'assets/custom.js', __FILE__ ), array('jquery'), null, true );
+/**
+ * cronの設定を登録するのと無効化時に外すの
+ */
+// プラグインが有効化された時に実行される関数
+function instagram_token_refresher_activate() {
+    // アクセストークン更新用cron設定(2ヶ月)
+    if (!wp_next_scheduled('refresh_instagram_access_token_event')) {
+        wp_schedule_event(time(), 'bi_monthly', 'refresh_instagram_access_token_event');
+    }
 }
-add_action( 'admin_enqueue_scripts', 'instagram_feeds_enqueue_assets' );
+register_activation_hook(__FILE__, 'instagram_token_refresher_activate');
+
+// 1時間ごとにInstagramのフィードを取得するCronジョブをスケジュール
+function instagram_feed_schedule_cron() {
+    // instagram Feedの自動取得、保存用cron設定(1時間)
+    if (!wp_next_scheduled('fetch_instagram_feed_event')) {
+        wp_schedule_event(time(), 'hourly', 'fetch_instagram_feed_event');
+    }
+}
+add_action('wp', 'instagram_feed_schedule_cron');
+
+// Cronジョブのイベントにfetch_instagram_feed関数を登録
+add_action('fetch_instagram_feed_event', 'fetch_instagram_feed');
+
+// プラグインが無効化された時に実行される関数
+function instagram_token_refresher_deactivate() {
+    // アクセストークン更新cronの削除
+    $ac_timestamp = wp_next_scheduled('refresh_instagram_access_token_event');
+    if ($ac_timestamp) {
+        wp_unschedule_event($ac_timestamp, 'refresh_instagram_access_token_event');
+    }
+
+    // feed取得cronの削除
+    $if_timestamp = wp_next_scheduled('fetch_instagram_feed_event');
+    if ($if_timestamp) {
+        wp_unschedule_event($if_timestamp, 'fetch_instagram_feed_event');
+    }
+}
+register_deactivation_hook(__FILE__, 'instagram_token_refresher_deactivate');
+
+// カスタムスケジュールの追加（2ヶ月ごと）
+function add_custom_cron_schedule($schedules) {
+    $schedules['bi_monthly'] = array(
+        'interval' => 60 * 60 * 24 * 60, // 2ヶ月 (60日)
+        'display' => __('Every 2 Months')
+    );
+    return $schedules;
+}
+add_filter('cron_schedules', 'add_custom_cron_schedule');
+
