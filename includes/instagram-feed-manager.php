@@ -11,7 +11,7 @@ function create_instagram_feed_post_type() {
         'new_item' => 'New Instagram Feed',
         'edit_item' => 'Edit Instagram Feed',
         'view_item' => 'View Instagram Feed',
-        'all_items' => 'All Instagram Feeds',
+        'all_items' => 'IntagramFeed管理',
         'search_items' => 'Search Instagram Feeds',
         'not_found' => 'No Instagram Feeds found.',
         'not_found_in_trash' => 'No Instagram Feeds found in Trash.'
@@ -19,12 +19,13 @@ function create_instagram_feed_post_type() {
 
     $args = array(
         'labels' => $labels,
-        'public' => true,
-        'has_archive' => true,
-        'menu_position' => 21,
-        'supports' => array('title', 'editor'),
+        'public' => false,
+        'show_ui' => true,
+        'show_in_nav_menu' => true,
+        'show_in_menu' => 'instagram-feeds',
+        'show_in_admin_bar' => true,
         'show_in_rest' => true, // Gutenberg対応
-        'show_in_menu' => true,  // メニューを1つに統一
+        'has_archive' => false, 
     );
 
     register_post_type('instagram_feed', $args);

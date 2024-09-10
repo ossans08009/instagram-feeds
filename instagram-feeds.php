@@ -15,11 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'INSTAGRAM_FEEDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
 // アクセストークンの管理をまとめたファイル
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/access-token-manager/access-token-manager.php';
+require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/access-token-manager.php';
 // インスタグラムのfeed管理をまとめたファイル
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-manager/instagram-feed-manager.php';
+require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-manager.php';
 // 表示用ショートコード周りの処理をまとめたファイル
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-carousel/short-code-manager.php';
+require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/short-code-manager.php';
 
 // 管理画面メニューとサブメニューの追加
 function instagram_feeds_add_admin_menu() {
@@ -32,26 +32,6 @@ function instagram_feeds_add_admin_menu() {
         'instagram_feeds_overview_page',      // 表示する関数
         'dashicons-instagram',                // アイコン
         20                                    // メニューの位置
-    );
-
-    // サブメニュー「アカウント管理」
-    add_submenu_page(
-        'instagram-feeds',                    // 親メニューのスラッグ
-        'アカウント管理',                           // ページタイトル
-        'アカウント管理',                           // メニュータイトル
-        'manage_options',                     // 権限
-        'access-token-manager',           // メニューのスラッグ
-        'edit.php?post_type=instagram_account'       // 表示する関数
-    );
-
-    // サブメニュー「Feed管理」
-    add_submenu_page(
-        'instagram-feeds',                    // 親メニューのスラッグ
-        'Feed管理',                              // ページタイトル
-        'Feed管理',                              // メニュータイトル
-        'manage_options',                     // 権限
-        'instagram-feed-manager',           // メニューのスラッグ
-        'edit.php?post_type=instagram_feed'   // 投稿タイプの編集ページを開く
     );
 }
 add_action( 'admin_menu', 'instagram_feeds_add_admin_menu' );

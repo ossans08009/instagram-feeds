@@ -11,7 +11,7 @@ function create_instagram_account_post_type() {
         'new_item' => 'New Instagram Account',
         'edit_item' => 'Edit Instagram Account',
         'view_item' => 'View Instagram Account',
-        'all_items' => 'All Instagram Accounts',
+        'all_items' => 'Instagramアカウント管理',
         'search_items' => 'Search Instagram Accounts',
         'not_found' => 'No Instagram Accounts found.',
         'not_found_in_trash' => 'No Instagram Accounts found in Trash.'
@@ -19,12 +19,11 @@ function create_instagram_account_post_type() {
 
     $args = array(
         'labels' => $labels,
-        'public' => true,
-        'has_archive' => true,
-        'menu_position' => 20,
-        'supports' => array('title'),
-        'show_in_rest' => true, // Gutenberg対応
-        'show_in_menu' => true,  // メニューを1つに統一
+        'public' => false,
+        'show_ui' => true,
+        'show_in_menu' => 'instagram-feeds',
+        'has_archive' => false, 
+        'supports' => array('instagram-account', array('title' => true, 'editor' => false, 'autosave' => false)),
     );
 
     register_post_type('instagram_account', $args);
@@ -76,7 +75,7 @@ function instagram_account_save_postdata($post_id) {
 
     // instagram基本表示APIからプロフィールを取得するURL
     $api_url = "https://graph.instagram.com/me?fields=id,username,account_type,media_count&access_token=" . $token;
-
+echo $api_url . "<br />";
     // APIリクエストを送信
     $response = wp_remote_get($api_url);
 
@@ -88,9 +87,10 @@ function instagram_account_save_postdata($post_id) {
     // レスポンスの内容を取得
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
-
+echo "hoge";
     // データが正しく取得できているか確認
     if (!isset($data['username'])) {
+die("hagegegegee");
         return 'データちゃんととれてないんですけお！';
     }
 
@@ -104,7 +104,7 @@ function instagram_account_save_postdata($post_id) {
     
     // 投稿を作成
     $post_id = wp_insert_post($new_post);
-
+die($post_id);
     // カスタムフィールドに他のプロフィール情報を保存
     if (!$post_id) {
         return 'うまく投稿できてなくなぁい？';
