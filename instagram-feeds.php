@@ -54,7 +54,6 @@ function instagram_feeds_overview_page() {
 
 /**
  * cronの設定を登録するのと無効化時に外すの
- */
 // プラグインが有効化された時に実行される関数
 function instagram_token_refresher_activate() {
     // アクセストークン更新用cron設定(2ヶ月)
@@ -103,3 +102,4 @@ function add_custom_cron_schedule($schedules) {
 }
 add_filter('cron_schedules', 'add_custom_cron_schedule');
 
+ */

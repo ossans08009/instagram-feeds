@@ -74,8 +74,8 @@ function instagram_account_save_postdata($post_id) {
     $token  = $_POST['instagram_access_token'];
 
     // instagram基本表示APIからプロフィールを取得するURL
-    $api_url = "https://graph.instagram.com/me?fields=id,username,account_type,media_count&access_token=" . $token;
-echo $api_url . "<br />";
+    $api_url = "https://graph.facebook.com/v20.0/" . $app_id . "?fields=name&access_token=" . $token;
+
     // APIリクエストを送信
     $response = wp_remote_get($api_url);
 
@@ -87,24 +87,23 @@ echo $api_url . "<br />";
     // レスポンスの内容を取得
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
-echo "hoge";
+
     // データが正しく取得できているか確認
-    if (!isset($data['username'])) {
-die("hagegegegee");
+    if (!isset($data['name'])) {
         return 'データちゃんととれてないんですけお！';
     }
 
     // 取得したアカウント名を使用して新しい投稿を作成
     $new_post = array(
-        'post_title' => sanitize_text_field($data['username']), // アカウント名を投稿タイトルに設定
-        'post_content' => $data['username'] . 'Instagramアカウント', // 投稿のコンテンツを設定
+        'post_title' => sanitize_text_field($data['name']), // アカウント名を投稿タイトルに設定
+        'post_content' => $data['name'] . 'Instagramアカウント', // 投稿のコンテンツを設定
         'post_status' => 'publish',
         'post_type' => 'instagram_account',
     );
     
     // 投稿を作成
     $post_id = wp_insert_post($new_post);
-die($post_id);
+
     // カスタムフィールドに他のプロフィール情報を保存
     if (!$post_id) {
         return 'うまく投稿できてなくなぁい？';
@@ -114,7 +113,7 @@ die($post_id);
     update_post_meta($post_id, '_instagram_access_token', sanitize_text_field($_POST['instagram_access_token']));
 
     // feed取得のcronを即時実行
-    do_action('fetch_instagram_feed');
+    // do_action('fetch_instagram_feed');
 }
 add_action('save_post', 'instagram_account_save_postdata');
 
