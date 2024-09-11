@@ -61,17 +61,24 @@ function instagram_account_meta_box_callback($post) {
 // メタデータの保存
 function instagram_account_save_postdata($post_id) {
     // 自動保存時には何もしない
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+    
     // 権限がなければ何もしない
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+    
     // 入力されてないフィールドがあっても何もしない
     // 何もするな....黄猿....
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE || !current_user_can('edit_post', $post_id)
-     || !isset($_POST['instagram_api_id']) || !isset($_POST['instagram_access_token'])) {
+    if (empty($_POST['instagram_api_id']) || empty($_POST['instagram_access_token'])) {
         return;
     }
 
-    // なんとなく変数にする
-    $app_id = $_POST['instagram_api_id'];
-    $token  = $_POST['instagram_access_token'];
+    // データをサニタイズ
+    $app_id = sanitize_text_field($_POST['instagram_api_id']);
+    $token  = sanitize_text_field($_POST['instagram_access_token']);
 
     // instagram基本表示APIからプロフィールを取得するURL
     $api_url = "https://graph.facebook.com/v20.0/" . $app_id . "?fields=name&access_token=" . $token;
@@ -81,7 +88,7 @@ function instagram_account_save_postdata($post_id) {
 
     // エラーチェック
     if (is_wp_error($response)) {
-        return 'プロフィールとれないんですけお！';
+        return new WP_Error('api_error', 'Instagram APIからプロフィールを取得できませんでした。');
     }
 
     // レスポンスの内容を取得
@@ -90,7 +97,7 @@ function instagram_account_save_postdata($post_id) {
 
     // データが正しく取得できているか確認
     if (!isset($data['name'])) {
-        return 'データちゃんととれてないんですけお！';
+        return new WP_Error('api_error', 'Instagram APIからデータを取得できませんでした。');
     }
 
     // 取得したアカウント名を使用して新しい投稿を作成
@@ -102,16 +109,18 @@ function instagram_account_save_postdata($post_id) {
     );
     
     // 投稿を作成
-    $post_id = wp_insert_post($new_post);
+    $new_post_id = wp_insert_post($new_post);
 
-    // カスタムフィールドに他のプロフィール情報を保存
-    if (!$post_id) {
-        return 'うまく投稿できてなくなぁい？';
+    if (is_wp_error($new_post_id)) {
+        return new WP_Error('post_creation_failed', 'Instagramアカウントの投稿作成に失敗しました。');
     }
 
-    update_post_meta($post_id, '_instagram_api_id', sanitize_text_field($_POST['instagram_api_id']));
-    update_post_meta($post_id, '_instagram_access_token', sanitize_text_field($_POST['instagram_access_token']));
+    // カスタムフィールドにAPI IDとアクセストークンを保存
+    update_post_meta($new_post_id, '_instagram_api_id', $app_id);
+    update_post_meta($new_post_id, '_instagram_access_token', $token);
 
+    // 多重投稿対策でアクション解除
+    remove_action('save_post', 'instagram_account_save_postdata');
     // feed取得のcronを即時実行
     // do_action('fetch_instagram_feed');
 }
