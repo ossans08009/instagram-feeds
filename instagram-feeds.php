@@ -54,6 +54,7 @@ function instagram_feeds_overview_page() {
 
 /**
  * cronの設定を登録するのと無効化時に外すの
+ */
 // プラグインが有効化された時に実行される関数
 function instagram_token_refresher_activate() {
     // アクセストークン更新用cron設定(2ヶ月)
@@ -91,15 +92,3 @@ function instagram_token_refresher_deactivate() {
 }
 register_deactivation_hook(__FILE__, 'instagram_token_refresher_deactivate');
 
-// カスタムスケジュールの追加
-// 最初は2ヶ月ごとだったけど、2ヶ月で切れるんだから余裕もって1ヶ月じゃないとダメじゃね？
-function add_custom_cron_schedule($schedules) {
-    $schedules['bi_monthly'] = array(
-        'interval' => 60 * 60 * 24 * 30, // 2ヶ月 (60日)
-        'display' => __('Every 1 Months')
-    );
-    return $schedules;
-}
-add_filter('cron_schedules', 'add_custom_cron_schedule');
-
- */
