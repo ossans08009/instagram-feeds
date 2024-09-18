@@ -62,7 +62,7 @@ function instagram_token_refresher_activate() {
         wp_schedule_event(time(), 'bi_monthly', 'refresh_instagram_access_token_event');
     }
 }
-register_activation_hook(__FILE__, 'instagram_token_refresher_activate');
+//register_activation_hook(__FILE__, 'instagram_token_refresher_activate');
 
 // 1時間ごとにInstagramのフィードを取得するCronジョブをスケジュール
 function instagram_feed_schedule_cron() {
@@ -71,10 +71,7 @@ function instagram_feed_schedule_cron() {
         wp_schedule_event(time(), 'hourly', 'fetch_instagram_feed_event');
     }
 }
-add_action('wp', 'instagram_feed_schedule_cron');
-
-// Cronジョブのイベントにfetch_instagram_feed関数を登録
-add_action('fetch_instagram_feed_event', 'fetch_instagram_feed');
+//add_action('wp', 'instagram_feed_schedule_cron');
 
 // プラグインが無効化された時に実行される関数
 function instagram_token_refresher_deactivate() {

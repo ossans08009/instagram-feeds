@@ -6,21 +6,15 @@ function instagram_feed_carousel_shortcode( $attr ) {
 
     // クエリでカスタム投稿タイプ 'instagram-feed' の投稿を取得
     $args = array(
-        'post_type' => 'instagram-feed',
+        'post_type' => 'instagram_feed',
         'posts_per_page' => 10, // 表示する投稿数
-        'meta_query' => array(
-            array(
-                'key' => '_thumbnail_id', // アイキャッチ画像が設定されている投稿のみ
-                'compare' => 'EXISTS',
-            ),
-        ),
     );
 
     $query = new WP_Query($args);
     
     // 投稿が存在しない場合、何も表示しない
     if (!$query->have_posts()) {
-        return '<p>No Instagram feed available.</p>';
+        return '<p>このワードでの投稿はありますん。</p>';
     }
 
     // カルーセル用のHTML開始
@@ -29,11 +23,12 @@ function instagram_feed_carousel_shortcode( $attr ) {
     // 投稿をループして、アイキャッチ画像を表示
     while ($query->have_posts()) {
         $query->the_post();
+
+        // feedの情報を取得
+        $thumbnail_url = get_post_meta( get_the_ID(), '_instagram_feed_thumbnail_url', true );
+        $permalink = get_post_meta( get_the_ID(), '_instagram_feed_permalink', true );
         
-        if (has_post_thumbnail()) {
-            $thumbnail_url = get_the_post_thumbnail_url(get_the_ID(), 'full');
-            $output .= '<div><img src="' . esc_url($thumbnail_url) . '" alt="' . esc_attr(get_the_title()) . '"></div>';
-        }
+        $output .= '<div><a tartget="_blank" href="' . $permalink . '"><img src="' . esc_url($thumbnail_url) . '" alt="' . esc_attr(get_the_title()) . '"></a></div>';
     }
 
     // HTML終了
@@ -56,11 +51,44 @@ function enqueue_slick_slider_scripts() {
     wp_add_inline_script('slick-slider-js', '
         jQuery(document).ready(function($) {
             $(".instagram-feed-carousel").slick({
-                infinite: true,
-                slidesToShow: 3,
-                slidesToScroll: 1,
-                autoplay: true,
-                autoplaySpeed: 2000,
+                dots: true,
+                infinite: false,
+                slidesToShow: 5,
+                slidesToScroll: 5,
+                autoplay: false,
+                arrows: true,
+                focusOnSelect: true,
+                variableWidth: true,
+                responsive: [
+                    {
+                        breakpoint: 1024,
+                        settings: {
+                            slidesToShow: 3,
+                            slidesToScroll: 3,
+                        }
+                    },
+                        {
+                        breakpoint: 600,
+                        settings: {
+                            slidesToShow: 2,
+                            slidesToScroll: 2,
+                            autoplay: true,
+                            autoplaySpeed: 2000,
+                        }
+                    },
+                    {
+                        breakpoint: 480,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1,
+                            autoplay: true,
+                            autoplaySpeed: 2000,
+                        }
+                    }
+                    // You can unslick at a given breakpoint now by adding:
+                    // settings: "unslick"
+                    // instead of a settings object
+                ]
             });
         });
     ');

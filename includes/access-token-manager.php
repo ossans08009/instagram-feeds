@@ -23,7 +23,7 @@ function create_instagram_account_post_type() {
         'show_ui' => true,
         'show_in_menu' => 'instagram-feeds',
         'has_archive' => false, 
-        'supports' => array('instagram-account', array('title' => true,)),
+        'supports' => array('instagram_account', array('title' => true,)),
     );
 
     register_post_type('instagram_account', $args);
@@ -115,14 +115,14 @@ function instagram_account_save_postdata($post_id) {
     );
     
     // 無限ループ対策でhook削除
-    remove_action('save_post', 'instagram_account_save_postdata');
+    remove_action('save_post_instagram_account', 'instagram_account_save_postdata');
     
     // 投稿を更新
     $update_result = wp_update_post($post, true, false);
 
     if (is_wp_error($update_result) || $update_result === 0) {
         // 無限ループ対策で解除してたhookの再設定。キモイ
-        add_action('save_post', 'instagram_account_save_postdata');
+        add_action('save_post_instagram_account', 'instagram_account_save_postdata');
 
         return wp_die( new WP_Error('post_creation_failed', 'Instagramアカウントの投稿に失敗しました。'), null, array('back_link' => true) );
     }
@@ -132,15 +132,15 @@ function instagram_account_save_postdata($post_id) {
     update_post_meta($post_id, '_instagram_access_token', $token);
 
     // 無限ループ対策で解除してたhookの再設定。キモイ
-    add_action('save_post', 'instagram_account_save_postdata');
+    add_action('save_post_instagram_account', 'instagram_account_save_postdata');
 
     // feed取得のcronを即時実行
-    // do_action('fetch_instagram_feed');
+    do_action('fetch_instagram_feed_event');
 
     // アクセストークンの更新処理失敗しやがる
     // do_action('refresh_instagram_access_token_event');
 }
-add_action('save_post', 'instagram_account_save_postdata');
+add_action('save_post_instagram_account', 'instagram_account_save_postdata');
 
 // アカウントのIDと投稿名取得する
 function get_all_instagram_account_posts() {
