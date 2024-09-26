@@ -15,11 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'INSTAGRAM_FEEDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
 // アクセストークンの管理をまとめたファイル
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/access-token-manager/access-token-manager.php';
+require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/access-token-manager.php';
 // インスタグラムのfeed管理をまとめたファイル
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-manager/instagram-feed-manager.php';
+require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-manager.php';
 // 表示用ショートコード周りの処理をまとめたファイル
-require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/instagram-feed-carousel/short-code-manager.php';
+require_once INSTAGRAM_FEEDS_PLUGIN_DIR . 'includes/short-code-manager.php';
 
 // 管理画面メニューとサブメニューの追加
 function instagram_feeds_add_admin_menu() {
@@ -32,26 +32,6 @@ function instagram_feeds_add_admin_menu() {
         'instagram_feeds_overview_page',      // 表示する関数
         'dashicons-instagram',                // アイコン
         20                                    // メニューの位置
-    );
-
-    // サブメニュー「アカウント管理」
-    add_submenu_page(
-        'instagram-feeds',                    // 親メニューのスラッグ
-        'アカウント管理',                           // ページタイトル
-        'アカウント管理',                           // メニュータイトル
-        'manage_options',                     // 権限
-        'access-token-manager',           // メニューのスラッグ
-        'edit.php?post_type=instagram_account'       // 表示する関数
-    );
-
-    // サブメニュー「Feed管理」
-    add_submenu_page(
-        'instagram-feeds',                    // 親メニューのスラッグ
-        'Feed管理',                              // ページタイトル
-        'Feed管理',                              // メニュータイトル
-        'manage_options',                     // 権限
-        'instagram-feed-manager',           // メニューのスラッグ
-        'edit.php?post_type=instagram_feed'   // 投稿タイプの編集ページを開く
     );
 }
 add_action( 'admin_menu', 'instagram_feeds_add_admin_menu' );
@@ -82,7 +62,7 @@ function instagram_token_refresher_activate() {
         wp_schedule_event(time(), 'bi_monthly', 'refresh_instagram_access_token_event');
     }
 }
-register_activation_hook(__FILE__, 'instagram_token_refresher_activate');
+//register_activation_hook(__FILE__, 'instagram_token_refresher_activate');
 
 // 1時間ごとにInstagramのフィードを取得するCronジョブをスケジュール
 function instagram_feed_schedule_cron() {
@@ -91,10 +71,7 @@ function instagram_feed_schedule_cron() {
         wp_schedule_event(time(), 'hourly', 'fetch_instagram_feed_event');
     }
 }
-add_action('wp', 'instagram_feed_schedule_cron');
-
-// Cronジョブのイベントにfetch_instagram_feed関数を登録
-add_action('fetch_instagram_feed_event', 'fetch_instagram_feed');
+//add_action('wp', 'instagram_feed_schedule_cron');
 
 // プラグインが無効化された時に実行される関数
 function instagram_token_refresher_deactivate() {
@@ -111,15 +88,4 @@ function instagram_token_refresher_deactivate() {
     }
 }
 register_deactivation_hook(__FILE__, 'instagram_token_refresher_deactivate');
-
-// カスタムスケジュールの追加
-// 最初は2ヶ月ごとだったけど、2ヶ月で切れるんだから余裕もって1ヶ月じゃないとダメじゃね？
-function add_custom_cron_schedule($schedules) {
-    $schedules['bi_monthly'] = array(
-        'interval' => 60 * 60 * 24 * 30, // 2ヶ月 (60日)
-        'display' => __('Every 1 Months')
-    );
-    return $schedules;
-}
-add_filter('cron_schedules', 'add_custom_cron_schedule');
 
