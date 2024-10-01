@@ -8,6 +8,11 @@ function instagram_feed_carousel_shortcode( $attr ) {
     $args = array(
         'post_type' => 'instagram_feed',
         'posts_per_page' => 10, // 表示する投稿数
+        'post_status' => 'publish', // 表示する投稿数
+        'meta_key'      => '_instagram_feed_timestamp',
+        'orderby'       => 'meta_value_num',
+        'order'         => 'DESC',
+        's' => $attr['word'],
     );
 
     $query = new WP_Query($args);
