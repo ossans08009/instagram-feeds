@@ -9,20 +9,6 @@ jQuery(document).ready(function($) {
         cssEase: 'ease', // イージングをリニアに設定
         centerMode: true, // 中央寄せ表示
         centerPadding: '100px', // 前後のスライドの見切れ幅
-        adaptiveHeight: true, // スライドの高さ調整
-        responsive: [
-            {
-                breakpoint: 780,
-                settings: {
-                    slidesToShow: 3
-                }
-            },
-            {
-                breakpoint: 480,
-                settings: {
-                    slidesToShow: 1
-                }
-            }
-        ]    
-    });
+        adaptiveHeight: true
+    }); 
 });
