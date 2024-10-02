@@ -10,7 +10,7 @@ function instagram_feed_carousel_shortcode( $attr ) {
         'posts_per_page' => 10, // 表示する投稿数
         'post_status' => 'publish', // 表示する投稿数
         'meta_key'      => '_instagram_feed_timestamp',
-        'orderby'       => 'meta_value_num',
+        'orderby'       => 'meta_value',
         'order'         => 'DESC',
         's' => $attr['word'],
     );
@@ -53,9 +53,9 @@ add_shortcode('instagram_feed_carousel', 'instagram_feed_carousel_shortcode');
 // プラグインのCSSを読み込む関数
 function my_plugin_enqueue_styles() {
     // slick-sliderのjsとcssを読み込み
-    wp_enqueue_style('slick-slider-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css');
-    wp_enqueue_style('slick-slider-theme-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css');
-    wp_enqueue_script('slick-slider-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), null, true);
+    wp_enqueue_style('slick-slider-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css', '1.0', true);
+    wp_enqueue_style('slick-slider-theme-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css', '1.0', true);
+    wp_enqueue_script('slick-slider-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), '1.0', true);
     
     // プラグインディレクトリからCSSを読み込む
     wp_enqueue_style(

@@ -197,7 +197,8 @@ function refresh_instagram_access_token() {
 
     foreach($accounts as $account) {
         // 現在のアクセストークンを取得
-        $access_token = get_post_meta($account->ID, 'instagram_access_token', true);
+        $api_id = get_post_meta($account->ID, '_instagram_api_id', true);
+        $access_token = get_post_meta($account->ID, '_instagram_access_token', true);
 
         // リフレッシュトークンのAPIエンドポイント
         $api_url = 'https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=' . $access_token;
