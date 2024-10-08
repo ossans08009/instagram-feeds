@@ -12,7 +12,8 @@ function instagram_feed_carousel_shortcode( $attr ) {
         'meta_key'      => '_instagram_feed_timestamp',
         'orderby'       => 'meta_value',
         'order'         => 'DESC',
-        's' => $attr['word'],
+        's'         => $attr['word'],
+        'exclude_word' => $attr['exclude_word'],
     );
 
     $query = new WP_Query($args);
@@ -23,7 +24,11 @@ function instagram_feed_carousel_shortcode( $attr ) {
     }
 
     // カルーセル用のHTML開始
-    $output  = '<div class="instagram-feeds">';
+    if($query->found_posts >= 5) {
+        $output  = '<div class="instagram-feeds">';
+    }else {
+        $output  = '<div class="instagram-feeds few-feeds">';
+    }
     
     // 投稿をループして、アイキャッチ画像を表示
     while ($query->have_posts()) {
@@ -49,6 +54,30 @@ function instagram_feed_carousel_shortcode( $attr ) {
     return $output;
 }
 add_shortcode('instagram_feed_carousel', 'instagram_feed_carousel_shortcode');
+
+// instagram_feedを検索する場合スペース区切りをAND検索にする
+function custom_search_where_for_instagram_feed($where, $wp_query) {
+    if ($wp_query->is_search && !empty($wp_query->query_vars['s']) && $wp_query->get('post_type') === 'instagram_feed') {
+        $search_terms = explode(' ', $wp_query->query_vars['s']);
+        if ($search_terms) {
+            $where = ''; // WHERE句をカスタマイズしてAND検索を実行
+            foreach ($search_terms as $term) {
+                $where .= " AND (post_title LIKE '%$term%' OR post_content LIKE '%$term%')";
+            }
+        }
+    }
+    if ($wp_query->is_search && !empty($wp_query->query_vars['exclude_word']) && $wp_query->get('post_type') === 'instagram_feed') {
+        $exclude_terms = array_merge(array( 'あらたつ先生の個別指導', ), explode(' ', $wp_query->query_vars['exclude_word']));
+        if ($exclude_terms) {
+            $where = ''; // WHERE句をカスタマイズしてAND検索を実行
+            foreach ($exclude_terms as $term) {
+                $where .= " AND (post_title NOT LIKE '%$term%' OR post_content NOT LIKE '%$term%')";
+            }
+        }
+    }
+    return $where;
+}
+add_filter('posts_search', 'custom_search_where_for_instagram_feed', 10, 2);
 
 // プラグインのCSSを読み込む関数
 function my_plugin_enqueue_styles() {

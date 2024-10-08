@@ -1,4 +1,7 @@
-.slick-slider,
+.slick-slider {
+    overflow-x: clip;
+}
+
 .slick-list {
     overflow: visible !important;
 }
@@ -22,7 +25,3 @@
     height: auto;
 }
 
-.slick-track {
-	display: flex !important;
-	align-items: center;
-}
