@@ -108,7 +108,14 @@ function fetch_instagram_feed() {
             $image_url = $feed_item['media_type'] == 'IMAGE'
                      ? $feed_item['media_url']
                      : $feed_item['thumbnail_url'];
-                     
+
+            // captionからyoutubeのurlを抽出する
+            $youtube_url = "";
+            $youtube_regex = '/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|v\/|user\/\S+|channel\/\S+|c\/\S+)|youtu\.be\/)([\w\-]{11})/';
+            if (preg_match($youtube_regex, $feed_item['caption'], $matches)) {
+                $youtube_url = $matches[0];
+            }
+
             // 念のためpost_idがる時しか更新しない
             if ($post_id) {
                 // カスタムフィールドにデータを保存
@@ -117,6 +124,7 @@ function fetch_instagram_feed() {
                 update_post_meta($post_id, '_instagram_feed_permalink', $feed_item['permalink']);
                 update_post_meta($post_id, '_instagram_feed_thumbnail_url', $image_url);
                 update_post_meta($post_id, '_instagram_feed_timestamp', $feed_item['timestamp']);
+                update_post_meta($post_id, '_youtube_url', $youtube_url);
             }
         }
     }
