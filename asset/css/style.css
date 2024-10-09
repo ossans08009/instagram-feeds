@@ -25,3 +25,23 @@
     height: auto;
 }
 
+.slick-slide:hover .buttons-area {
+    display: block;
+}
+
+.buttons-area {
+    position: relative;
+    top: -10vh;
+    height: 10vh;
+    padding: 1vh 5vh;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.buttons-area {
+    color: #000;
+}
+
+.buttons-area i {
+    font-size: 8vh;
+    margin-right: 1vh;
+}
