@@ -31,11 +31,13 @@ function instagram_feed_carousel_shortcode( $attr ) {
     while ($query->have_posts()) {
         $query->the_post();
         $post_id = get_the_ID();
-        // 投稿本文を取得して、20文字に制限
+
+      // 投稿本文を取得して、20文字に制限
         $content = get_the_content();  // 本文を取得
         $content = wp_strip_all_tags($content);
         $content = removeGreeting($content);
         $trimmed_content = mb_substr($content, 0, 12);  // 15文字に制限
+
 
         // feedの情報を取得
         $thumbnail_url = get_post_meta( $post_id, '_instagram_feed_thumbnail_url', true );
