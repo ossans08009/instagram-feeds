@@ -75,6 +75,11 @@ function fetch_instagram_feed() {
 
         // 取得したfeedをカスタム投稿タイプ「instagram-feed」として保存
         foreach ($all_feeds as $feed_item) {
+            // カルーセルタイプだったらめんどいのでスキップ
+            if ($feed_item['media_type'] == 'CAROUSEL_ALBUM') {
+                continue; 
+            }
+
             // Instagramのフィードがすでに保存されているか確認
             $existing_feed = new WP_Query(array(
                 'post_type' => 'instagram_feed',
@@ -82,35 +87,44 @@ function fetch_instagram_feed() {
                 'meta_value' => $feed_item['id'],
             ));
 
-            // すでに存在する場合はスキップ
-            if ($existing_feed->have_posts()) {
-                continue; 
+            // すでに存在する場合は登録はしない
+            if (!$existing_feed->have_posts()) {
+                // 新しい投稿を作成
+                $post_id = wp_insert_post(array(
+                    'post_title' => wp_trim_words($feed_item['caption'], 10, '...'),
+                    'post_content' => $feed_item['caption'],
+                    'post_status' => 'publish',
+                    'post_type' => 'instagram_feed',
+                ));
+            }else {
+                // 更新のためにpost_idとっとく
+                while($existing_feed->have_posts()) {
+                    $existing_feed->the_post();
+                    $post_id = get_the_ID();
+                }
             }
 
-            // カルーセルタイプだったらめんどいのでスキップ
-            if ($feed_item['media_type'] == 'CAROUSEL_ALBUM') {
-                continue; 
-            }
-
-            // 新しい投稿を作成
-            $post_id = wp_insert_post(array(
-                'post_title' => wp_trim_words($feed_item['caption'], 10, '...'),
-                'post_content' => $feed_item['caption'],
-                'post_status' => 'publish',
-                'post_type' => 'instagram_feed',
-            ));
-
+            // 動画サムネイルか画像かでパスが違う
             $image_url = $feed_item['media_type'] == 'IMAGE'
                      ? $feed_item['media_url']
                      : $feed_item['thumbnail_url'];
 
+            // captionからyoutubeのurlを抽出する
+            $youtube_url = "";
+            $youtube_regex = '/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|v\/|user\/\S+|channel\/\S+|c\/\S+)|youtu\.be\/)([\w\-]{11})/';
+            if (preg_match($youtube_regex, $feed_item['caption'], $matches)) {
+                $youtube_url = $matches[0];
+            }
+
+            // 念のためpost_idがる時しか更新しない
             if ($post_id) {
                 // カスタムフィールドにデータを保存
-                update_post_meta($post_id, '_instagram_api_id', $api_id);   // 誰のfeedかは大切じゃん？
+                update_post_meta($post_id, '_instagram_api_id', $api_id);
                 update_post_meta($post_id, '_instagram_feed_id', $feed_item['id']);
                 update_post_meta($post_id, '_instagram_feed_permalink', $feed_item['permalink']);
                 update_post_meta($post_id, '_instagram_feed_thumbnail_url', $image_url);
                 update_post_meta($post_id, '_instagram_feed_timestamp', $feed_item['timestamp']);
+                update_post_meta($post_id, '_youtube_url', $youtube_url);
             }
         }
     }

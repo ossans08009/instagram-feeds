@@ -71,7 +71,7 @@ function instagram_feed_schedule_cron() {
         wp_schedule_event(time(), 'hourly', 'fetch_instagram_feed_event');
     }
 }
-//add_action('wp', 'instagram_feed_schedule_cron');
+add_action('wp', 'instagram_feed_schedule_cron');
 
 // プラグインが無効化された時に実行される関数
 function instagram_token_refresher_deactivate() {
