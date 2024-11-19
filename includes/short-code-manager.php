@@ -1,9 +1,6 @@
 <?php
 // カスタム投稿タイプ 'instagram-feed' からアイキャッチを取得しカルーセルを表示するショートコード
 function instagram_feed_carousel_shortcode( $attr ) {
-    // 引数
-    $attr;
-
     // クエリでカスタム投稿タイプ 'instagram-feed' の投稿を取得
     $args = array(
         'post_type' => 'instagram_feed',
@@ -25,26 +22,35 @@ function instagram_feed_carousel_shortcode( $attr ) {
 
     // カルーセル用のHTML開始
     if($query->found_posts >= 5) {
-        $output  = '<div class="instagram-feeds">';
+        $output .= '<div class="instagram-feeds">';
     }else {
-        $output  = '<div class="instagram-feeds few-feeds">';
+        $output .= '<div class="instagram-feeds few-feeds">';
     }
     
     // 投稿をループして、アイキャッチ画像を表示
     while ($query->have_posts()) {
         $query->the_post();
         $post_id = get_the_ID();
+        // 投稿本文を取得して、20文字に制限
+        $content = get_the_content();  // 本文を取得
+        $content = wp_strip_all_tags($content);
+        $content = removeGreeting($content);
+        $trimmed_content = mb_substr($content, 0, 12);  // 15文字に制限
 
         // feedの情報を取得
         $thumbnail_url = get_post_meta( $post_id, '_instagram_feed_thumbnail_url', true );
         $permalink     = get_post_meta( $post_id, '_instagram_feed_permalink', true );
         $youtube_url   = get_post_meta( $post_id, '_youtube_url', true );
+        $note_url      = get_post_meta( $post_id, '_note_url', true );
+        $menu_id       = get_post_meta( $post_id, '_menu_id', true );
         
         $output .= '<div class="instagram-feed">';
-        $output .= '<a target="_blank" href="' . $permalink . '">';
-        $output .= '<img src="' . esc_url($thumbnail_url) . '" alt="' . esc_attr(get_the_title()) . '" />';
-        $output .= '</a>';
+        $output .= '<img loading="lazy" data-lazy="' . esc_url($thumbnail_url) . '" alt="' . esc_attr(get_the_title()) . '" />';
+
         $output .= '<div class="buttons-area">';
+        $output .= '<p class="captions">' . $trimmed_content . '...</p>';
+
+        $output .= '<div class="icon-container">';
         $output .= '<a target="_blank" href="' . $permalink . '">';
         $output .= '<i class="fab fa-instagram"></i>';
         $output .= '</a>';
@@ -53,11 +59,26 @@ function instagram_feed_carousel_shortcode( $attr ) {
             $output .= '<i class="fab fa-youtube"></i>';
             $output .= '</a>';
         }
+        if($note_url) {
+            $output .= '<a target="_blank" href="' . $note_url . '">';
+            $output .= '<i class="fas fa-sticky-note"></i>';
+            $output .= '</a>';
+        }
+        if($menu_id) {
+            $output .= '<a target="_blank" href="' . get_permalink($menu_id) . '">';
+            $output .= '<i class="fa fa-shopping-cart"></i>';
+            $output .= '</a>';
+        }
+
+        // end icon-container
         $output .= '</div>';
+        // end buttons-area
+        $output .= '</div>';
+        // end instagram-feed
         $output .= '</div>';
     }
-
-    // HTML終了
+  
+    // end instagram-feeds
     $output .= '</div>';
     
     // クエリをリセット
@@ -100,11 +121,16 @@ add_filter('posts_search', 'custom_search_where_for_instagram_feed', 10, 2);
 
 // プラグインのCSSを読み込む関数
 function my_plugin_enqueue_styles() {
+    $version = "0.4.2";
     // slick-sliderのjsとcssを読み込み
-    wp_enqueue_style('slick-slider-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css', '1.0', true);
-    wp_enqueue_style('slick-slider-theme-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css', '1.0', true);
-    wp_enqueue_script('slick-slider-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), '1.0', true);
+    wp_enqueue_style('slick-slider-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css', $version, true);
+    wp_enqueue_style('slick-slider-theme-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css', $version, true);
+    wp_enqueue_script('slick-slider-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), $version, true);
     
+    // Swiperの読み込み
+    wp_enqueue_style('swiper-css', 'https://unpkg.com/swiper/swiper-bundle.min.css', $version, true);
+    wp_enqueue_script('swiper-js', 'https://unpkg.com/swiper/swiper-bundle.min.js', array(), $version, true);
+
     // プラグインディレクトリからCSSを読み込む
     wp_enqueue_style(
         'instagram-feeds-style', // CSSハンドル名
@@ -124,3 +150,19 @@ function my_plugin_enqueue_styles() {
     );
 }
 add_action('wp_enqueue_scripts', 'my_plugin_enqueue_styles');
+
+function removeGreeting($text) {
+    // 削除したい挨拶のパターンを正規表現で指定
+    $pattern = '/^(こんにちわ|こんばんわ|こんばんは|こんにちは|おはようございます)[!！?？]*/u';
+    
+    // 挨拶部分を削除
+    $result = preg_replace($pattern, '', $text);
+
+    // 定型文を削除
+    $result = preg_replace('/今回紹介するのは/u', '', $result);
+
+    // スペースとか削除
+    $result = preg_replace('/\s|　|\r|\n/u', '', $result);
+
+    return $result;
+}

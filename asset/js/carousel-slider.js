@@ -1,17 +1,19 @@
 jQuery(document).ready(function($) {
     $(".instagram-feeds").slick({
-        slidesToShow: 5, // 横に5つのスライドを表示
-        arrows: true, // 前へ・次へのページ送りボタンを表示
+        swipeToSlide: true,
+        slidesToShow: 6,
+        slidesToScroll: 99,
+        infinite: true,
+        arrows: false, // 前へ・次へのページ送りボタンを表示
         dots: false, // ナビゲーションドットを非表示
-        speed: 800, // 切り替えアニメーションの時間を800ms
-        cssEase: 'ease', // イージングをリニアに設定
-        centerMode: true, // 中央寄せ表示
-        centerPadding: '100px', // 前後のスライドの見切れ幅
-        adaptiveHeight: true,
+        lazyLoad: 'progressive',
+        cssEase: 'linear',
+        speed: 0,
         responsive: [{
-            breakpoint: 500,
+            breakpoint: 769,
             settings: {
-                slidesToShow: 1
+                slidesToShow: 3,
+                slidesToScroll: 99,
             }
         }]
     }); 
