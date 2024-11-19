@@ -132,3 +132,126 @@ function fetch_instagram_feed() {
 // Cronジョブのイベントにfetch_instagram_feed関数を登録
 add_action('fetch_instagram_feed_event', 'fetch_instagram_feed');
 
+// カスタム投稿編集画面にyoutubeなどの外部リンク用カスタムフィールドを表示する
+// カスタムメタボックスを登録
+function add_instagram_feed_meta_box() {
+    add_meta_box(
+        'youtube_url_box',            // メタボックスID
+        'Youtbe URL',            // メタボックスタイトル
+        'display_youtube_url_box',    // コールバック関数
+        'instagram_feed',       // カスタム投稿タイプ
+        'side',                      // 表示場所 (normal, side, etc.)
+        'high'                         // 表示優先度 (high, low)
+    );
+    add_meta_box(
+        'note_url_box',            // メタボックスID
+        'note URL',            // メタボックスタイトル
+        'display_note_url_box',    // コールバック関数
+        'instagram_feed',       // カスタム投稿タイプ
+        'side',                      // 表示場所 (normal, side, etc.)
+        'high'                         // 表示優先度 (high, low)
+    );
+    add_meta_box(
+        'menu_id_box',            // メタボックスID
+        'menu page',            // メタボックスタイトル
+        'display_menu_id_box',    // コールバック関数
+        'instagram_feed',       // カスタム投稿タイプ
+        'side',                      // 表示場所 (normal, side, etc.)
+        'high'                         // 表示優先度 (high, low)
+    );
+}
+add_action('add_meta_boxes', 'add_instagram_feed_meta_box');
+
+// メタボックスの内容を表示するコールバック関数
+function display_youtube_url_box() {
+    // 保存時の非表示フィールド (セキュリティ)
+    wp_nonce_field('save_custom_field_data', 'custom_field_nonce');
+
+    // 現在の値を取得
+    $post_id = get_the_ID();
+    $value = get_post_meta($post_id, '_youtube_url', true);
+    $value = esc_attr($value);
+
+    // 入力フォームを表示
+    echo '<label for="_youtube_url">Youtube URL:</label>';
+    echo '<input type="text" id="_youtube_url" name="_youtube_url" value="' . $value . '" />';
+}
+function display_note_url_box() {
+    // 保存時の非表示フィールド (セキュリティ)
+    wp_nonce_field('save_custom_field_data', 'custom_field_nonce');
+
+    // 現在の値を取得
+    $post_id = get_the_ID();
+    $value = get_post_meta($post_id, '_note_url', true);
+    $value = esc_attr($value);
+
+    // 入力フォームを表示
+    echo '<label for="_note_url">Note URL:</label>';
+    echo '<input type="text" id="_note_url" name="_note_url" value="' . $value . '" />';
+}
+function display_menu_id_box() {
+    // 保存時の非表示フィールド (セキュリティ)
+    wp_nonce_field('save_custom_field_data', 'custom_field_nonce');
+
+    // 現在の値を取得
+    $post_id = get_the_ID();
+    $value = get_post_meta($post_id, '_menu_id', true);
+    $value = esc_attr($value);
+
+    // クエリでカスタム投稿タイプ 'instagram-feed' の投稿を取得
+    $args = array(
+        'post_type' => 'post',
+        'posts_per_page' => -1, // 表示する投稿数
+        'post_status' => 'publish', // 表示する投稿数
+        'category_name' => 'menu',          // カテゴリースラッグを指定（複数の場合は「,」で区切る）
+        'orderby'       => 'date',
+        'order'         => 'DESC',
+    );
+
+    $query = new WP_Query($args);
+    
+    // 入力フォームを表示
+    echo '<label for="_menu_id">翻訳済みメニューページ:</label>';
+    echo '<select name="_menu_id" id="_menu_id">';
+    echo '<option value="">メニューなし</option>';
+    while ($query->have_posts()) {
+        $query->the_post();
+        $post_id = get_the_ID();
+        $title = get_the_title();
+
+        if($post_id == $value) {
+            echo '<option selected value="' . $post_id . '">' . $title . '</option>';
+        }else {
+            echo '<option value="' . $post_id . '">' . $title . '</option>';
+        }
+    }
+    echo '</select>';
+}
+
+function save_instagram_feed_meta($post_id) {
+    // 自動保存時には何もしない
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+
+    // ユーザーが編集権限を持っているかを確認
+    if (!current_user_can('edit_post', $post_id)) return;
+
+    // nonceをチェック
+    if (!isset($_POST['custom_field_nonce']) || !wp_verify_nonce($_POST['custom_field_nonce'], 'save_custom_field_data')) return;
+
+    // カスタムフィールドの値を取得
+    if (isset($_POST['_youtube_url'])) {
+        $_youtube_url = sanitize_text_field($_POST['_youtube_url']);
+        update_post_meta($post_id, '_youtube_url', $_youtube_url);
+    }
+
+    if (isset($_POST['_note_url'])) {
+        $_note_url = sanitize_text_field($_POST['_note_url']);
+        update_post_meta($post_id, '_note_url', $_note_url);
+    }
+
+    if (isset($_POST['_menu_id'])) {
+        $_menu_id = sanitize_text_field($_POST['_menu_id']);
+        update_post_meta($post_id, '_menu_id', $_menu_id);
+    }
+}
+add_action('save_post_instagram_feed', 'save_instagram_feed_meta');
